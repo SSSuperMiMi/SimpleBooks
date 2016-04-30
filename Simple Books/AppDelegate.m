@@ -7,6 +7,12 @@
 //
 
 #import "AppDelegate.h"
+#import "ViewController.h"
+#import "SimpleBooks.h"
+#import "CoreData.h"
+#import "Strings.h"
+
+AppDelegate *App;
 
 @interface AppDelegate ()
 
@@ -14,9 +20,20 @@
 
 @implementation AppDelegate
 
+@synthesize managedObjectContext = _managedObjectContext;
+@synthesize managedObjectModel = _managedObjectModel;
+@synthesize persistentStoreCoordinator = _persistentStoreCoordinator;
+
+-(void)application:(UIApplication *)application didReceiveLocalNotification:(UILocalNotification *)notification{
+    // 当程序运行的时候消息来的时候会收到这个通知.
+    // 后台删除程序也会收到通知.
+    application.applicationIconBadgeNumber -= 1;
+}
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     // Override point for customization after application launch.
+    App = self;
+    
     return YES;
 }
 
@@ -46,10 +63,6 @@
 
 #pragma mark - Core Data stack
 
-@synthesize managedObjectContext = _managedObjectContext;
-@synthesize managedObjectModel = _managedObjectModel;
-@synthesize persistentStoreCoordinator = _persistentStoreCoordinator;
-
 - (NSURL *)applicationDocumentsDirectory {
     // The directory the application uses to store the Core Data store file. This code uses a directory named "-00.Simple_Books" in the application's documents directory.
     return [[[NSFileManager defaultManager] URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask] lastObject];
@@ -75,6 +88,13 @@
     
     _persistentStoreCoordinator = [[NSPersistentStoreCoordinator alloc] initWithManagedObjectModel:[self managedObjectModel]];
     NSURL *storeURL = [[self applicationDocumentsDirectory] URLByAppendingPathComponent:@"Simple_Books.sqlite"];
+    BOOL firstRun = NO;
+    if (![[NSFileManager defaultManager] fileExistsAtPath:[storeURL path] isDirectory:NULL]) {
+        firstRun = YES;
+    }
+    if (firstRun == true) {
+        SimpleBooks::FirstTimeRun = true;
+    }
     NSError *error = nil;
     NSString *failureReason = @"There was an error creating or loading the application's saved data.";
     if (![_persistentStoreCoordinator addPersistentStoreWithType:NSSQLiteStoreType configuration:nil URL:storeURL options:nil error:&error]) {
@@ -92,7 +112,6 @@
     
     return _persistentStoreCoordinator;
 }
-
 
 - (NSManagedObjectContext *)managedObjectContext {
     // Returns the managed object context for the application (which is already bound to the persistent store coordinator for the application.)
